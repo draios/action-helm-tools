@@ -11,21 +11,19 @@ install_helm
 install_artifactory_plugin
 get_chart_version
 
-set -x
-
-case $INPUT_ACTION in
+case ${ACTION} in
     "package")
-        echo "==> Helm dependency build"
+        print_title "Helm dependency build"
         helm dependency build ${CHART_DIR}
 
-        echo "==> Linting"
+        print_title "Linting"
         helm lint ${CHART_DIR}
 
-        echo "==> Helm package"
+        print_title "Helm package"
         helm package ${CHART_DIR} --version v${CHART_VERSION} --app-version ${CHART_VERSION} --destination ${RUNNER_WORKSPACE}
         ;;
     "publish")
-        echo "==> Push chart"
+        print_title "Push chart"
         helm push-artifactory ${CHART_DIR} ${ARTIFACTORY_URL} --username ${ARTIFACTORY_USERNAME} --password ${ARTIFACTORY_PASSWORD} --version "${CHART_VERSION}"
         ;;
 esac

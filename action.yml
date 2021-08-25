@@ -1,16 +1,7 @@
-name: 'Helm test, package, push to Artifactory'
-description: 'GitHub Action for packaging, testing helm charts and publishing to Artifactory helm repo'
-author: 'mbovo'
-
-inputs:
-  action:
-    required: true
-    description: 'Options: package, publish'
-
+name: 'Helm tools'
+description: GitHub Action for packaging, testing helm charts and publishing to Artifactory helm repo'
 runs:
-  using: 'node12'
-  main: 'main.js'
-
-branding:
-  color: blue
-  icon: check-square
+  using: "composite"
+  steps:
+    - run: ${{ github.action_path }}/main.sh
+      shell: bash
