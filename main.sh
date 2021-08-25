@@ -27,3 +27,5 @@ case ${ACTION} in
         helm push-artifactory ${CHART_DIR} ${ARTIFACTORY_URL} --username ${ARTIFACTORY_USERNAME} --password ${ARTIFACTORY_PASSWORD} --version "${CHART_VERSION}"
         ;;
 esac
+
+remove_helm
