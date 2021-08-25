@@ -1,0 +1,22 @@
+name: Docker Image CI
+on: 
+  push:
+    branches:
+      - master
+    paths:
+      - 'runnertools/**'
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_IMAGE: jackbit/runnertools
+      DOCKER_FILE: Dockerfile
+    steps:
+    - uses: actions/checkout@v1
+    - name: Build the Docker image
+      working-directory: ./runnertools
+      run: |
+        echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u ${{ secrets.DOCKERHUB_USER }} --password-stdin
+        docker build . --file $DOCKER_FILE -t $DOCKER_IMAGE:$GITHUB_SHA -t $DOCKER_IMAGE:latest
+        docker push $DOCKER_IMAGE:$GITHUB_SHA
+        docker push $DOCKER_IMAGE:latest
