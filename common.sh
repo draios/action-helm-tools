@@ -71,7 +71,9 @@ install_jfrog() {
 
 install_artifactory_plugin(){
     print_title "Install helm artifactory plugin"
-    helm plugin install https://github.com/belitre/helm-push-artifactory-plugin --version ${HELM_ARTIFACTORY_PLUGIN_VERSION}
+    if ! (helm plugin list  | grep -q push-artifactory); then
+        helm plugin install https://github.com/belitre/helm-push-artifactory-plugin --version ${HELM_ARTIFACTORY_PLUGIN_VERSION}
+    fi
 }
 
 create_k3d_cluster() {
