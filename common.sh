@@ -14,15 +14,16 @@ print_title(){
 
 get_chart_version(){
     print_title "Calculating chart version"
-    pushd $CHART_DIR 
+    pushd "$CHART_DIR"
     CANDIDATE_VERSION=$(python3 -c "import yaml; f=open('Chart.yaml','r');  p=yaml.safe_load(f.read()); print(p['version']); f.close()" )
     popd
     echo "${GITHUB_EVENT_NAME}"
     if [ "${GITHUB_EVENT_NAME}" == "pull_request" ]; then
-        export CHART_VERSION="${CANDIDATE_VERSION}-$(git rev-parse --short "$GITHUB_SHA")"
+        CHART_VERSION="${CANDIDATE_VERSION}-$(git rev-parse --short "$GITHUB_SHA")"
     else
-        export CHART_VERSION="${CANDIDATE_VERSION}"
+        CHART_VERSION="${CANDIDATE_VERSION}"
     fi
+    export CHART_VERSION
 }
 
 get_helm() {

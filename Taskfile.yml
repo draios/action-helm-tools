@@ -1,0 +1,40 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  GREETING: Hello, World!
+
+tasks:
+  default:
+    cmds:
+      - task -l
+    silent: true
+
+  check:
+    desc: "Run pre-commit hooks"
+    cmds:
+      - pre-commit run -a
+
+  pre-commit:
+    cmds:
+      - pre-commit install
+    sources:
+      - .git/hooks/pre-commit
+      - .pre-commit-config.yaml
+    generates:
+      - .git/hooks/pre-commit
+    method: checksum
+
+  bootstrap:
+    desc: Bootstrap of dev environment
+    preconditions:
+      - sh: "which pre-commit"
+        msg: "pre-commit not found (https://pre-commit.com)"
+    cmds:
+      - task: pre-commit
+
+  test:
+    desc: Run tests
+    cmds:
+      - echo "Nothing to do"

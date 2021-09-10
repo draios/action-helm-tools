@@ -1,0 +1,37 @@
+name: Sanity Checks
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions/setup-python@v2
+    - uses: pre-commit/action@v2.0.3
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+  tagging:
+    name: "Tagging (dry-run)"
+    needs: pre-commit
+    runs-on: ubuntu-latest
+    outputs:
+      net_tag: ${{ steps.tag_version.outputs.new_tag }}
+    steps:
+      - uses: actions/checkout@v2
+      - name: Bump version and push tag
+        id: tag_version
+        uses: mathieudutour/github-tag-action@v5.6
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          dry_run: true
+      - run: echo "Calculated Next Tag is ${{ steps.tag_version.outputs.tags }}"
+      #use this with ${{needs.job1.outputs.output1}}
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: arduino/setup-task@v1
+      - name: Lint and tests
+        run: |
+          task test
