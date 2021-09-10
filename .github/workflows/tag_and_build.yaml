@@ -5,7 +5,7 @@ on:
     tags: ["*"]
 jobs:
   pre-commit:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
@@ -15,7 +15,7 @@ jobs:
   tagging:
     name: "Tagging"
     needs: pre-commit
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     outputs:
       next_tag: ${{ steps.tag_version.outputs.new_version }}
     steps:
@@ -28,12 +28,16 @@ jobs:
       - run: |
           echo Calculated Next Tag is ${{ steps.tag_version.outputs.new_tag }}
 
+  post_slack:
+    runs-on: self-hosted
+    needs: tagging
+    steps:
       - name: Post to a Slack channel
         if: ${{ success() }}
         id: slack_success
         uses: slackapi/slack-github-action@v1.15.0
         with:
           channel-id: 'sdcadmin-operator'
-          slack-message: ':cool-doge: `${{github.GITHUB_REPOSITORY}}` new version: ${{needs.tagging.outputs.next_tag}}'
+          slack-message: ':cool-doge: `${{github.repository}}` new version: ${{needs.tagging.outputs.next_tag}}'
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
