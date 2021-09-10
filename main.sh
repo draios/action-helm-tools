@@ -6,7 +6,6 @@ export SCRIPT_DIR=$(dirname -- "$(readlink -f "${BASH_SOURCE[0]}" || realpath "$
 
 source $SCRIPT_DIR/common.sh
 
-install_yq
 install_helm
 install_artifactory_plugin
 get_chart_version
