@@ -33,6 +33,8 @@ HELM_ARTIFACTORY_PLUGIN_VERSION: # Override helm artifactory plugin version. Def
 
 # Example workflow
 
+Never use `main` branch in your github workflows!
+
 ```yaml
 name: Helm lint, test, package and publish
 
@@ -48,7 +50,7 @@ jobs:
     #   run:
 
       - name: "Helm publish"
-        uses: draios/action-helm-tools@v1.1.0
+        uses: draios/action-helm-tools@v1.0.1
         with:
           action: "package"
         env:
@@ -58,7 +60,7 @@ jobs:
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_HELM_PASSWORD }}
 
       - name: "Helm publish"
-        uses: draios/action-helm-tools@v1.1.0
+        uses: draios/action-helm-tools@v1.0.1
         with:
           action: "publish"
         env:
