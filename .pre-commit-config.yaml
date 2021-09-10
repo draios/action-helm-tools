@@ -9,11 +9,15 @@ repos:
       - id: check-symlinks
       - id: check-yaml
       - id: detect-private-key
-      - id: detect-aws-credentials
   - repo: https://github.com/jumanjihouse/pre-commit-hooks
     rev: 2.1.5  # or specific git tag
     hooks:
       - id: shellcheck
+        args:
+          - "-e"
+          - "SC1090"
+          - "-e"
+          - "SC1091"
   - repo: https://github.com/sirosen/check-jsonschema
     rev: 0.4.1
     hooks:
