@@ -26,12 +26,19 @@ tasks:
       - .git/hooks/pre-commit
     method: checksum
 
-  bootstrap:
-    desc: Bootstrap of dev environment
-    preconditions:
-      - sh: "which pre-commit"
-        msg: "pre-commit not found (https://pre-commit.com)"
+  pre-commit-setup:
     cmds:
+      - pip3 install pre-commit
+    status:
+      - which pre-commit
+
+  setup:
+    desc: Bootstrap dev environment
+    preconditions:
+      - sh: "[ $(python3 --version | cut -d ' ' -f 2 | awk -F'.' '{print ($2 > 6) }') = 1 ]"
+        msg: "Required python version not found (>=3.6)"
+    cmds:
+      - task: pre-commit-setup
       - task: pre-commit
 
   test:
