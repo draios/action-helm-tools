@@ -14,6 +14,8 @@ print_title(){
 
 get_chart_version(){
     print_title "Calculating chart version"
+	echo "Installing prerequisites"
+	pip3 install PyYAML
     pushd "$CHART_DIR"
     CANDIDATE_VERSION=$(python3 -c "import yaml; f=open('Chart.yaml','r');  p=yaml.safe_load(f.read()); print(p['version']); f.close()" )
     popd
