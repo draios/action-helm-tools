@@ -11,6 +11,9 @@ print_title(){
     echo "#####################################################"
 }
 
+logit(){
+    echo "$(date -u +"%Y-%m-%dT%H:%M:%SZ") - ${1} - ${2}"
+}
 
 get_chart_version(){
     print_title "Calculating chart version"
