@@ -4,6 +4,15 @@
 
 ## Arguments
 
+- from the `environment`:
+
+    `CHART_VERSION_EXT`: use this Chart version
+
+    `WAIT_FOR_CHART`: poll the helm repo until the chart is available to download
+
+    `HELM_REPO_URL`:
+    
+    `TIMEOUT`: 
 
 ## Checks
 
@@ -43,4 +52,24 @@
 - after pushing the image, the script must start a retried attempt (with timeout) to pull the Chart from the Helm repo
 
     - the Helm repo used to pull can be passed as an optional argument
+
+1) rename docker-image to containers
+
+2) build the docker image using GH action
+
+3) https://github.com/draios/infra-github-runner
+use build: section
+4)
+
+add in tag and build solo quando cambia qualcosa in containers
+
+
+precommit
+
+taskfile
+https://pre-commit.com/
+
+https://taskfile.dev/#/
+
+self-hosted
 
