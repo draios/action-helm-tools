@@ -73,3 +73,8 @@ https://taskfile.dev/#/
 
 self-hosted
 
+## For reference: how this image is executed in the secure-backend `Makefile`
+
+```
+	$(DOCKER) run -v `pwd`/.k8s:/charts -e ARTIFACTORY_USER=$(ARTIFACTORY_CREDENTIALS_USR) -e ARTIFACTORY_PASSWORD=$(ARTIFACTORY_CREDENTIALS_PSW) -e CHART_VERSION=$(CHART_VERSION) docker.internal.sysdig.com/helm-push-artifactory:1.0.0
+```

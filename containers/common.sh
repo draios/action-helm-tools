@@ -31,6 +31,17 @@ get_chart_version(){
     export CHART_VERSION
 }
 
+get_chart_name(){
+    logit "INFO" "Calculating chart version"
+	logit "INFO" "Installing prerequisites"
+	pip3 install PyYAML
+    pushd "$CHART_DIR"
+    CHART_NAME=$(python3 -c "import yaml; f=open('Chart.yaml','r');  p=yaml.safe_load(f.read()); print(p['name']); f.close()" )
+    popd
+    export CHART_NAME
+}
+
+
 get_helm() {
     print_title "Get helm:${HELM_VERSION}"
     curl -L "https://get.helm.sh/helm-v${HELM_VERSION}-linux-amd64.tar.gz" | tar xvz
