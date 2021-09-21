@@ -63,7 +63,7 @@ case "${ACTION}" in
         count=0
         while [[ $count -lt ${TIMEOUT_PULL} ]]; do
             # where is the name of the chart?
-            if helm pull helm-repo/${CHART_NAME} --version "${CHART_VERSION}"; then
+            if helm pull helm-repo/"${CHART_NAME}" --version "${CHART_VERSION}"; then
                 logit "INFO" "helm pull is ok"
             else
                 logit "WARNING" "helm pull not ok"
