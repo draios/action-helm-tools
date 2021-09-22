@@ -21,6 +21,7 @@ ARTIFACTORY_PASSWORD=${ARTIFACTORY_PASSWORD:-}
 ARTIFACTORY_PULL_URL=${ARTIFACTORY_PULL_URL:-https://artifactory.internal.sysdig.com:443/artifactory/helm/}
 HELM_PULL_RETRIES=${HELM_PULL_RETRIES:-5}
 CHART_NAME=${CHART_NAME:-}
+PULL_SLEEP_TIME=${PULL_SLEEP_TIME:-10}
 
 ### main ##############
 #install_helm
@@ -50,14 +51,13 @@ case "${ACTION}" in
         logit "INFO" "CHART_NAME: ${CHART_NAME}"
         helm dependency build "${CHART_DIR}"
         logit "INFO" "execute helm lint"
-        a=$(helm lint "${CHART_DIR}" 2>&1)
-        logit "INFO" "helm lint output: $a"
+        helm lint "${CHART_DIR}"
         logit "INFO" "execute helm package"
         helm package "${CHART_DIR}" --version v"${CHART_VERSION}" --app-version "${CHART_VERSION}" --destination "${CHART_OUTPUT_DIR}"
         logit "INFO" "Push chart"
         [[ ! -d "${CHART_OUTPUT_DIR}" ]] && mkdir -p "${CHART_OUTPUT_DIR}"
-        logit "DEBUG" "Not executing the push-artifactory command"
-        echo helm push-artifactory "${CHART_DIR}" "${ARTIFACTORY_URL}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}" --version "${CHART_VERSION}"
+        logit "DEBUG" "Pushing helm chart ${CHART_NAME} to repo ${ARTIFACTORY_URL}"
+        helm push-artifactory "${CHART_DIR}" "${ARTIFACTORY_URL}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}" --version "${CHART_VERSION}"
         # pulling
         logit "INFO" "Adding ${ARTIFACTORY_URL} as helm-repo"
         helm repo add helm-repo "${ARTIFACTORY_PULL_URL}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}"
@@ -71,12 +71,19 @@ case "${ACTION}" in
                 break
             else
                 logit "WARNING" "helm pull not ok, retry ${count} of ${HELM_PULL_RETRIES}"
+                logit "INFO" "executing a helm repo update"
+                helm repo update
             fi
             (( count=count+1 ))
             logit "DEBUG" "count: ${count}"
-            sleep 10
+            sleep "${PULL_SLEEP_TIME}"
         done
-        logit "INFO" "Done"
+        if [[ ${count} -eq ${HELM_PULL_RETRIES} ]]; then
+            logit "ERROR" "could not pull chart: ${CHART_NAME} version: ${CHART_VERSION} from: ${ARTIFACTORY_PULL_URL} after ${HELM_PULL_RETRIES}"
+            exit 1
+        else
+            logit "INFO" "Done"
+        fi
         ;;
     "package")
         print_title "Helm dependency build"
