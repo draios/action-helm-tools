@@ -1,3 +1,4 @@
 .task
 linux-amd64
 tmp
+*.tgz
