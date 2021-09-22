@@ -11,8 +11,8 @@
     `WAIT_FOR_CHART`: poll the helm repo until the chart is available to download
 
     `HELM_REPO_URL`:
-    
-    `TIMEOUT`: 
+
+    `TIMEOUT`:
 
 ## Checks
 
@@ -27,7 +27,7 @@
 
 - right now the script only does a `push-artifactory` of the Chart
 
-- can the extra feature of the host tool (`dependency build`, `lint`, `package`) be added? 
+- can the extra feature of the host tool (`dependency build`, `lint`, `package`) be added?
     - what's the impact on existing users?
 
 

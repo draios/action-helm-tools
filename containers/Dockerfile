@@ -1,6 +1,6 @@
 FROM docker.internal.sysdig.com/sysdig-mini-ubi:1.1.10
 
-RUN microdnf --setopt=tsflags=nodocs --disableplugin=subscription-manager install openssl tar gzip which git python3 python3-pip && \     
+RUN microdnf --setopt=tsflags=nodocs --disableplugin=subscription-manager install openssl tar gzip which git python3 python3-pip && \
     curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3 && \
     chmod 700 get_helm.sh && \
     ./get_helm.sh && \
@@ -9,4 +9,4 @@ RUN microdnf --setopt=tsflags=nodocs --disableplugin=subscription-manager instal
 
 COPY main.sh common.sh /
 
-ENTRYPOINT /main.sh
+ENTRYPOINT ["/main.sh"]
