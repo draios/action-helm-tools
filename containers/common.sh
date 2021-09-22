@@ -32,12 +32,10 @@ get_chart_version(){
 }
 
 get_chart_name(){
-    logit "INFO" "Calculating chart version"
-	logit "INFO" "Installing prerequisites"
-	pip3 install PyYAML
-    pushd "$CHART_DIR"
+    logit "INFO" "Extracting chart name from Chart.yaml"
+    pushd "$CHART_DIR" > /dev/null
     CHART_NAME=$(python3 -c "import yaml; f=open('Chart.yaml','r');  p=yaml.safe_load(f.read()); print(p['name']); f.close()" )
-    popd
+    popd > /dev/null
     export CHART_NAME
 }
 

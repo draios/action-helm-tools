@@ -1,80 +1,119 @@
-# Push helm charts to Artifactory
+# Push helm charts to Artifactory - Docker Image
 
-- a docker image to push Helm charts to Artifactory
+- a docker image to check and push Helm charts to Artifactory
+- checks:
+    - `helm lint`
+    - `helm package`
+    - `helm pull` (Artifactory has a delay between pushing a chart and it being available to pull)
 
 ## Arguments
 
+### Required
 - from the `environment`:
 
     `CHART_VERSION_EXT`: use this Chart version
 
-    `WAIT_FOR_CHART`: poll the helm repo until the chart is available to download
+### Optional
 
-    `HELM_REPO_URL`:
-
-    `TIMEOUT`:
-
-## Checks
-
-
-## Notes
 
 ### Current usage
 
-- who/what/where is using this right now? make a list
+- see https://sysdig.atlassian.net/wiki/spaces/~benedetto.logiudice/pages/2403860713/Installer+-+CICD+-+Harness+-+helm+push+to+artifactory+for+Sysdig+charts#Where-is-the-image-used
 
-### pushing vs packaging vs linting etc
+#### For reference: how this image is executed in the secure-backend `Makefile`
 
-- right now the script only does a `push-artifactory` of the Chart
-
-- can the extra feature of the host tool (`dependency build`, `lint`, `package`) be added?
-    - what's the impact on existing users?
-
-
+```
+	$(DOCKER) run -v `pwd`/.k8s:/charts -e ARTIFACTORY_USER=$(ARTIFACTORY_CREDENTIALS_USR) -e ARTIFACTORY_PASSWORD=$(ARTIFACTORY_CREDENTIALS_PSW) -e CHART_VERSION=$(CHART_VERSION) docker.internal.sysdig.com/helm-push-artifactory:1.0.0
+```
 
 ### UBI image
 
 - the Docker base image must be one of the new UBI image
 
-### Additional arguments
+## TODO:
 
-- add the following optional arguments
+- build the docker image using GH action when the PR is merged
+    - see https://github.com/draios/infra-github-runner
+    - see `use build` section
+    - this image should be built in `tag and build` only when the content of `containers` has changed
 
-    - Chart version
-    - Helm repo to pull the chart from
+## pre-commit tooling for sanityc checks
 
-#### More on the additional arguments
+- using `git hooks` the code is checked when committing:
 
-- the script must have an optional argument for Chart version
+- tools:
 
-    - this value takes precedence over the current extraction of the values from `Chart.yaml`
+    - https://pre-commit.com/
+    - https://taskfile.dev/#/
 
-- after pushing the image, the script must start a retried attempt (with timeout) to pull the Chart from the Helm repo
+### installing the tooling to take advantage of the git hooks and sanity checks
 
-    - the Helm repo used to pull can be passed as an optional argument
+- the repo comes with some `git hooks` which are executed on GitHub via actions
 
-1) rename docker-image to containers
+- these checks can be executed also locally provided the required tools are installed
 
-2) build the docker image using GH action
-
-3) https://github.com/draios/infra-github-runner
-use build: section
-4)
-
-add in tag and build solo quando cambia qualcosa in containers
-
-
-precommit
-
-taskfile
-https://pre-commit.com/
-
-https://taskfile.dev/#/
-
-self-hosted
-
-## For reference: how this image is executed in the secure-backend `Makefile`
+#### MacOS
 
 ```
-	$(DOCKER) run -v `pwd`/.k8s:/charts -e ARTIFACTORY_USER=$(ARTIFACTORY_CREDENTIALS_USR) -e ARTIFACTORY_PASSWORD=$(ARTIFACTORY_CREDENTIALS_PSW) -e CHART_VERSION=$(CHART_VERSION) docker.internal.sysdig.com/helm-push-artifactory:1.0.0
+brew install go-task/tap/go-task
 ```
+
+and then:
+
+```
+brew install shellcheck
+brew install pre-commit (don't be surprise if it takes a long time and if it installs and updates a lot of packages)
+```
+
+
+or
+
+```
+task setup
+```
+
+- you can then execute:
+
+
+```
+task
+task: Available tasks for this project:
+* check: 	Run pre-commit hooks
+* setup: 	Bootstrap dev environment
+* test: 	Run tests
+```
+
+and
+
+```
+task check
+task: [check] pre-commit run -a
+Trim Trailing Whitespace.................................................Passed
+Fix End of Files.........................................................Passed
+Check for added large files..............................................Passed
+Check for merge conflicts................................................Passed
+Check for broken symlinks............................(no files to check)Skipped
+Check Yaml...............................................................Passed
+Detect Private Key.......................................................Passed
+Test shell scripts with shellcheck.......................................Passed
+Lint Dockerfiles.........................................................Passed
+Validate GitHub Workflows................................................Passed
+```
+
+- the checks are executed at every commit
+
+```
+git commit -m "Run task check"
+git puTrim Trailing Whitespace.................................................Passed
+Fix End of Files.........................................................sPassed
+Check for added large files..............................................hPassed
+Check for merge conflicts................................................Passed
+Check for broken symlinks............................(no files to check)Skipped
+Check Yaml...........................................(no files to check)Skipped
+Detect Private Key.......................................................Passed
+Test shell scripts with shellcheck.......................................Passed
+Lint Dockerfiles.........................................................Passed
+Validate GitHub Workflows............................(no files to check)Skipped
+[INSTALL-1388-helm-push-docker-image 47138d7] Run task check
+ 5 files changed, 6 insertions(+), 8 deletions(-)
+ ```
