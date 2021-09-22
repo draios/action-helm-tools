@@ -6,7 +6,7 @@ RUN microdnf --setopt=tsflags=nodocs --disableplugin=subscription-manager instal
     ./get_helm.sh && \
     helm plugin install https://github.com/belitre/helm-push-artifactory-plugin --version v1.0.2 && \
     rm -rf get_helm.sh && \
-    pip3 install --no-cache-dir PyYAML==5.4.1.1
+    pip3 install --no-cache-dir PyYAML==5.4.1
 
 COPY main.sh common.sh /
 
