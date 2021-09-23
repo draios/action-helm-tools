@@ -7,7 +7,11 @@ SCRIPT_DIR=$(dirname -- "$(readlink -f "${BASH_SOURCE[0]}" || realpath "${BASH_S
 export SCRIPT_DIR
 source "$SCRIPT_DIR/common.sh"
 
-# optional arguments
+# debugging is always useful
+DEBUG=${DEBUG:-}
+[[ -n "${DEBUG}" ]] && set -x
+
+# arguments
 CHART_VERSION_EXT=${CHART_VERSION_EXT:-}
 WAIT_FOR_CHART=${WAIT_FOR_CHART:-false}
 HELM_REPO_URL=${HELM_REPO_URL:-}
@@ -22,14 +26,21 @@ HELM_PULL_RETRIES=${HELM_PULL_RETRIES:-5}
 CHART_NAME=${CHART_NAME:-}
 PULL_SLEEP_TIME=${PULL_SLEEP_TIME:-10}
 REPO_NAME=${REPO_NAME:-artifactory}
-DEBUG=${DEBUG:-}
 
-[[ -n "${DEBUG}" ]] && set -x
+# used in the secure-backend repo - to avoid having to make any change
+ARTIFACTORY_CREDENTIALS_PSW=${ARTIFACTORY_CREDENTIALS_PSW:-}
+ARTIFACTORY_CREDENTIALS_USR=${ARTIFACTORY_CREDENTIALS_USR:-}
+if [[ -n "${ARTIFACTORY_CREDENTIALS_USR}" ]]; then
+    ARTIFACTORY_USERNAME=${ARTIFACTORY_CREDENTIALS_USR}
+fi
+if [[ -n "${ARTIFACTORY_CREDENTIALS_PSW}" ]]; then
+    ARTIFACTORY_PASSWORD=${ARTIFACTORY_CREDENTIALS_PSW}
+fi
+####################################################################
+
 
 
 ### main ##############
-#install_helm
-#install_artifactory_plugin
 logit "INFO" "Starting"
 if [[ -z "${CHART_VERSION_EXT}" ]]; then
     logit "ERROR" "CHART_VERSION_EXT is required"
@@ -47,35 +58,32 @@ if [[ -z "${ARTIFACTORY_PASSWORD}" ]]; then
     exit 1
 fi
 
-logit "INFO" "action is all"
-logit "INFO" "Helm dependency build"
+# extract the chat name to CHART_NAME
 get_chart_name
-logit "INFO" "CHART_NAME: ${CHART_NAME}"
+
+logit "INFO" "execute helm dependency build CHART_NAME: ${CHART_NAME}"
 helm dependency build "${CHART_DIR}"
-logit "INFO" "execute helm lint"
+
+logit "INFO" "execute helm lint with CHART_DIR: ${CHART_DIR}"
 helm lint "${CHART_DIR}"
-logit "INFO" "execute helm package"
-helm package "${CHART_DIR}" --version v"${CHART_VERSION}" --app-version "${CHART_VERSION}" --destination "${CHART_OUTPUT_DIR}"
-logit "INFO" "Push chart"
+
 [[ ! -d "${CHART_OUTPUT_DIR}" ]] && mkdir -p "${CHART_OUTPUT_DIR}"
-logit "DEBUG" "Pushing helm chart ${CHART_NAME} to repo ${ARTIFACTORY_PUSH_URL}"
+logit "INFO" "execute helm package with CHART_DIR: ${CHART_DIR} CHART_VERSION: ${CHART_VERSION}  CHART_OUTPUT_DIR: ${CHART_OUTPUT_DIR}"
+helm package "${CHART_DIR}" --version "${CHART_VERSION}" --app-version "${CHART_VERSION}" --destination "${CHART_OUTPUT_DIR}"
+
+logit "INFO" "Pushing helm chart ${CHART_NAME} to repo ${ARTIFACTORY_PUSH_URL}"
 helm push-artifactory "${CHART_DIR}" "${ARTIFACTORY_PUSH_URL}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}" --version "${CHART_VERSION}"
-# pulling
-#logit "INFO" "Adding ${ARTIFACTORY_PUSH_URL} as helm-repo"
-#helm repo add helm-repo "${ARTIFACTORY_PULL_URL}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}"
-#helm search repo 2>/dev/null
-#helm search repo helm-repo 2>/dev/null
+
+logit "DEBUG" "Pulling helm chart ${CHART_NAME} from repo ${ARTIFACTORY_PULL_URL} with CHART_VERSION: ${CHART_VERSION}"
 count=0
 while [[ $count -lt ${HELM_PULL_RETRIES} ]]; do
-    # where is the name of the chart?
     if helm pull --repo "${ARTIFACTORY_PULL_URL}" "${CHART_NAME}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}" --version "${CHART_VERSION}"; then
         logit "INFO" "helm pull is ok"
         break
     else
-        logit "WARNING" "helm pull not ok, retry ${count} of ${HELM_PULL_RETRIES}"
+        logit "WARNING" "helm pull not ok, retrying ($(( count+1))/${HELM_PULL_RETRIES})"
     fi
     (( count=count+1 ))
-    logit "DEBUG" "count: ${count}"
     sleep "${PULL_SLEEP_TIME}"
 done
 if [[ ${count} -eq ${HELM_PULL_RETRIES} ]]; then
