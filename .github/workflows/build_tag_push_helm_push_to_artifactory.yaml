@@ -4,7 +4,7 @@ on:
   push:
     branches: ["INSTALL-1388-helm-push-docker-image"]
     #branches: ["main"]
-    tags: ["*"]
+    # tags: ["*"]
     paths:
       - 'containers/**'
 jobs:
@@ -13,13 +13,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-        with:
-          token: ${{ secrets.GIT_TOKEN }}
       - name: Build & Tag & Push to Artifactory
         env:
           ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
-          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
         run: |
           set -o errexit
           set -o nounset
