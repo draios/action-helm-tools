@@ -14,25 +14,31 @@
       Only solution seems to be to use a special `TAG` during development.
 
 
-## Arguments
+## Arguments and defaults
 
-### Required
-- from the `environment`:
+```
+ARTIFACTORY_PASSWORD=${ARTIFACTORY_PASSWORD:-}
+ARTIFACTORY_USER=${ARTIFACTORY_USER:-}
 
-    `CHART_VERSION_EXT`: use this Chart version
+ARTIFACTORY_PULL_URL=${ARTIFACTORY_PULL_URL:-https://artifactory.internal.sysdig.com/artifactory/helm/}
+ARTIFACTORY_PUSH_URL=${ARTIFACTORY_PUSH_URL:-https://artifactory.internal.sysdig.com:443/artifactory/helm-local/}
 
-### Optional
+CHART_NAME=${CHART_NAME:-}
+CHART_DIR=${CHART_DIR:-/charts}
+CHART_OUTPUT_DIR=${CHART_OUTPUT_DIR:-/chart_output}
+CHART_VERSION=${CHART_VERSION:-}
 
+HELM_PULL_RETRIES=${HELM_PULL_RETRIES:-12}
+PULL_SLEEP_TIME=${PULL_SLEEP_TIME:-10}
+REPO_NAME=${REPO_NAME:-artifactory}
+WAIT_FOR_CHART=${WAIT_FOR_CHART:-false}
+```
 
-### Current usage
+### Usage
+
+- inventory of where this is used
 
 - see https://sysdig.atlassian.net/wiki/spaces/~benedetto.logiudice/pages/2403860713/Installer+-+CICD+-+Harness+-+helm+push+to+artifactory+for+Sysdig+charts#Where-is-the-image-used
-
-#### For reference: how this image is executed in the secure-backend `Makefile`
-
-```
-	$(DOCKER) run -v `pwd`/.k8s:/charts -e ARTIFACTORY_USER=$(ARTIFACTORY_CREDENTIALS_USR) -e ARTIFACTORY_PASSWORD=$(ARTIFACTORY_CREDENTIALS_PSW) -e CHART_VERSION=$(CHART_VERSION) docker.internal.sysdig.com/helm-push-artifactory:1.0.0
-```
 
 ### UBI image
 

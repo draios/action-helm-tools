@@ -6,8 +6,10 @@ logit(){
 }
 
 get_chart_name(){
-    logit "INFO" "Extracting chart name from Chart.yaml"
+    logit "INFO" "Extracting chart name from Chart.yaml CHART_DIR=${CHART_DIR} PWD=${PWD}"
+    pushd "${CHART_DIR}" >/dev/null
     CHART_NAME=$(python3 -c "import yaml; f=open('Chart.yaml','r');  p=yaml.safe_load(f.read()); print(p['name']); f.close()" )
+    popd > /dev/null
     export CHART_NAME
 }
 
