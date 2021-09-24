@@ -1,0 +1,37 @@
+name: Build Tag Push Chart Push Image
+on:
+  push:
+    branches: ["INSTALL-1388-helm-push-docker-image"]
+    #branches: ["main"]
+    tags: ["*"]
+    paths:
+      - 'containers/**'
+jobs:
+  build:
+    name: Build & Tag & Push to Artifactory Image to Push Charts to Artifactory
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.GIT_TOKEN }}
+      - name: Build & Tag & Push to Artifactory
+        env:
+          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_USERNAME }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }}
+          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
+        run: |
+          set -o errexit
+          set -o nounset
+          set -o pipefail
+          echo "INFO: starting"
+          ls -l
+          pwd
+          cd containers
+          if docker pull docker.internal.sysdig.com/helm-push-artifactory:$(cat version); then
+            echo "ERROR: image docker.internal.sysdig.com/helm-push-artifactory:$(cat version) already exists, refusing to overwrite"
+            exit 1
+          fi
+          docker build --no-cache -f Dockerfile . -t docker.internal.sysdig.com/helm-push-artifactory:$(cat version)
+          docker push docker.internal.sysdig.com/helm-push-artifactory:$(cat version)
+          docker rmi docker.internal.sysdig.com/helm-push-artifactory:$(cat version)
+          echo "INFO: done"
