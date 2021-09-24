@@ -6,6 +6,14 @@
     - `helm package`
     - `helm pull` (Artifactory has a delay between pushing a chart and it being available to pull)
 
+## TODO
+
+- GH action to build and push the image (on merge to `main`)
+    - question: while developing and testing, the image will be needed on artifactory at `docker.internal.sysdig.com/helm-push-artifactory:TAG`
+      if `TAG` is same as the one in [version](containers/version) then the `docker push` will fail.
+      Only solution seems to be to use a special `TAG` during development.
+
+
 ## Arguments
 
 ### Required
