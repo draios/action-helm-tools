@@ -21,10 +21,13 @@ jobs:
           set -o errexit
           set -o nounset
           set -o pipefail
+          set -x
           echo "INFO: starting"
           cd containers
+
           echo "INFO: log into artifactory"
           echo "${ARTIFACTORY_PASSWORD}" | docker login docker.internal.sysdig.com --username "${ARTIFACTORY_USERNAME}" --password-stdin
+
           if docker pull docker.internal.sysdig.com/helm-push-artifactory:$(cat version); then
               echo "ERROR: image docker.internal.sysdig.com/helm-push-artifactory:$(cat version) already exists, refusing to overwrite"
               exit 1
