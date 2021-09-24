@@ -24,7 +24,7 @@ jobs:
           echo "INFO: starting"
           cd containers
           echo "INFO: log into artifactory"
-          docker login docker.internal.sysdig.com -u "${ARTIFACTORY_USERNAME}" -p "${ARTIFACTORY_PASSWORD}"
+          echo "${ARTIFACTORY_PASSWORD}" | docker login docker.internal.sysdig.com --username "${ARTIFACTORY_USERNAME}" --password-stdin
           if docker pull docker.internal.sysdig.com/helm-push-artifactory:$(cat version); then
               echo "ERROR: image docker.internal.sysdig.com/helm-push-artifactory:$(cat version) already exists, refusing to overwrite"
               exit 1
