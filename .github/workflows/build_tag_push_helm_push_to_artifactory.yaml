@@ -1,5 +1,6 @@
 name: Build Tag Push Chart Push Image
 on:
+  workflow_dispatch:
   push:
     branches: ["INSTALL-1388-helm-push-docker-image"]
     #branches: ["main"]
