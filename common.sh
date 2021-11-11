@@ -13,6 +13,10 @@ print_title(){
 
 
 get_chart_version(){
+    if [ -n "$CHART_VERSION" ]; then
+        echo "CHART_VERSION variable is already set (value: $CHART_VERSION), will override Chart.yaml"
+        return
+    fi
     print_title "Calculating chart version"
 	echo "Installing prerequisites"
 	pip3 install PyYAML

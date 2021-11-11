@@ -28,6 +28,7 @@ ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_PASSWORD }} # ARTIFACTORY_PASSWORD
 HELM_VERSION: # Override helm version. Default "2.14.3"
 KUBECTL_VERSION: # Override kubectl version. Default "1.15.4"
 HELM_ARTIFACTORY_PLUGIN_VERSION: # Override helm artifactory plugin version. Default "v1.0.2"
+CHART_VERSION: # If defined, override version in Chart.yaml file. Default is unset
 ```
 
 
