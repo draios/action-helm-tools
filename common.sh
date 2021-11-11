@@ -13,7 +13,7 @@ print_title(){
 
 
 get_chart_version(){
-    if [ ! -z $CHART_VERSION ]; then
+    if [ -n "$CHART_VERSION" ]; then
         echo "CHART_VERSION variable is already set (value: $CHART_VERSION), will override Chart.yaml"
         return
     fi
