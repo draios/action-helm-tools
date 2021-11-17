@@ -35,7 +35,7 @@ jobs:
       - name: Post to a Slack channel
         if: ${{ success() }}
         id: slack_success
-        uses: slackapi/slack-github-action@v1.15.0
+        uses: slackapi/slack-github-action@v1.16
         with:
           channel-id: 'sdcadmin-operator'
           slack-message: ':cool-doge: `${{github.repository}}` new version: ${{needs.tagging.outputs.next_tag}}'
