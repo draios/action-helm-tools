@@ -4,6 +4,7 @@ set -eo pipefail
 export HELM_VERSION=${HELM_VERSION:="3.5.1"}
 export KUBECTL_VERSION=${KUBECTL_VERSION:="1.21.0"}
 export HELM_ARTIFACTORY_PLUGIN_VERSION=${HELM_ARTIFACTORY_PLUGIN_VERSION:="v1.0.2"}
+export CHART_VERSION=${CHART_VERSION:=""}
 
 print_title(){
     echo "#####################################################"
