@@ -18,7 +18,12 @@ case "${ACTION}" in
         helm dependency build "${CHART_DIR}"
 
         print_title "Linting"
-        helm lint "${CHART_DIR}"
+        if [[ -f "${CHART_DIR}/linter_values.yaml" ]]; then
+            # allow for the same yaml layout that is used by gruntwork-io/pre-commit helmlint.sh
+            helm lint -f "${CHART_DIR}/values.yaml" -f "${CHART_DIR}/linter_values.yaml" "${CHART_DIR}"
+        else
+            helm lint "${CHART_DIR}"
+        fi
 
         print_title "Helm package"
         helm package "${CHART_DIR}" --version v"${CHART_VERSION}" --app-version "${CHART_VERSION}" --destination "${RUNNER_WORKSPACE}"
