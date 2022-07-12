@@ -3,6 +3,6 @@ description: GitHub Action for packaging, testing helm charts and publishing to 
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-python@v2
+    - uses: actions/setup-python@v4.1.0
     - run: ${{ github.action_path }}/main.sh
       shell: bash
