@@ -27,7 +27,7 @@ case "${ACTION}" in
         fi
 
         print_title "Helm kubeval"
-        helm kubeval "${CHART_DIR}"
+        helm kubeval "${CHART_DIR}" --ignore-missing-schemas
 
         print_title "Helm package"
         helm package "${CHART_DIR}" --version v"${CHART_VERSION}" --app-version "${CHART_VERSION}" --destination "${RUNNER_WORKSPACE}"
