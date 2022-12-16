@@ -9,6 +9,7 @@ export SCRIPT_DIR
 source "$SCRIPT_DIR/common.sh"
 
 install_helm
+install_kubeval_plugin
 install_artifactory_plugin
 get_chart_version
 
@@ -24,6 +25,9 @@ case "${ACTION}" in
         else
             helm lint "${CHART_DIR}"
         fi
+
+        print_title "Helm kubeval"
+        helm kubeval "${CHART_DIR}"
 
         print_title "Helm package"
         helm package "${CHART_DIR}" --version v"${CHART_VERSION}" --app-version "${CHART_VERSION}" --destination "${RUNNER_WORKSPACE}"
