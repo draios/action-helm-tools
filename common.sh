@@ -50,6 +50,13 @@ install_helm() {
     fi
 }
 
+install_kubeval_plugin(){
+    print_title "Install kubeval plugin"
+    if ! (helm plugin list  | grep -q kubeval); then
+        helm plugin install https://github.com/instrumenta/helm-kubeval
+    fi
+}
+
 install_artifactory_plugin(){
     print_title "Install helm artifactory plugin"
     if ! (helm plugin list  | grep -q push-artifactory); then
