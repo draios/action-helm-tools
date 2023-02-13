@@ -6,6 +6,8 @@ export KUBECTL_VERSION=${KUBECTL_VERSION:="1.21.0"}
 export HELM_ARTIFACTORY_PLUGIN_VERSION=${HELM_ARTIFACTORY_PLUGIN_VERSION:="v1.0.2"}
 export CHART_VERSION=${CHART_VERSION:=""}
 
+export GCLOUD_PROJECT_CHECK=${GCLOUD_PROJECT_CHECK:="true"}
+
 print_title(){
     echo "#####################################################"
     echo "$1"
@@ -67,4 +69,16 @@ install_artifactory_plugin(){
 remove_helm(){
     helm plugin uninstall push-artifactory
     sudo rm -rf /usr/local/bin/helm
+}
+
+function version {
+    echo "$@" | tr -cd '[:digit:].' | awk -F. '{ printf("%d%03d%03d%03d\n", $1,$2,$3,$4); }'
+}
+
+check_helm_version_gte_3_8(){
+    current_helm_version=$(helm version --short -c | cut -d '+' -f1)
+    if [[ $(version "$current_helm_version") -lt $(version "3.8.0") ]]; then
+        echo "Required helm version a least 3.8.0 currently running '${current_helm_version}'."
+        exit 1
+    fi
 }
