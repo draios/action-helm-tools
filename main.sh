@@ -57,12 +57,39 @@ case "${ACTION}" in
         echo "$GAR_JSON_KEY" \
             | helm registry login -u _json_key --password-stdin "https://${GAR_URL}"
 
-        output=$(helm package "${CHART_DIR}" --destination /tmp)
+        SHOW_CHART_VERSION=$(helm show chart "${CHART_DIR}" | grep 'version:' | sed 's#version:##g' | tr -d '[:space:]')
+        SHOW_CHART_APP_VERSION=$(helm show chart "${CHART_DIR}" | grep 'appVersion:' | sed 's#appVersion:##g' | tr -d '[:space:]')
+
+        if [[ -n "$CHART_VERSION" ]]; then
+            echo "CHART_VERSION has been provided, packaging with this version: '${CHART_VERSION}'."
+        else
+            echo "CHART_VERSION was empty, packaging with version defined in Chart.yaml: '${SHOW_CHART_VERSION}'."
+            CHART_VERSION="$SHOW_CHART_VERSION"
+        fi
+
+        if [[ -n "$CHART_APP_VERSION" ]]; then
+            echo "CHART_APP_VERSION has been provided, packaging with this version: '${CHART_APP_VERSION}'."
+        else
+            echo "CHART_APP_VERSION was empty, packaging with version defined in Chart.yaml: '${SHOW_CHART_APP_VERSION}'."
+            CHART_APP_VERSION="$SHOW_CHART_APP_VERSION"
+
+            if [[ -z "$SHOW_CHART_APP_VERSION" ]]; then
+                echo "SHOW_CHART_APP_VERSION was empty as well, packaging with default appVersion: '0.1.0'."
+                CHART_APP_VERSION="0.1.0"
+            fi
+        fi
+
+        output=$( \
+            helm package "${CHART_DIR}" \
+                --destination /tmp \
+                --version "$CHART_VERSION" \
+                --app-version "$CHART_APP_VERSION")
         # shellcheck disable=SC2181
         if [[ "$?" -ne "0" ]]; then
             echo "Failed to package chart located at dir $CHART_DIR"
             exit 1
         fi
+
         CHART_LOCATION=$(echo "$output" | cut -d':' -f2 | tr -d '[:space:]')
         helm push "${CHART_LOCATION}" "oci://${GAR_URL}/${GCLOUD_PROJECT}/${CHART_PREFIX}"
         ;;
