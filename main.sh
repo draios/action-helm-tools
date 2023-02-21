@@ -81,6 +81,7 @@ case "${ACTION}" in
             fi
         fi
 
+        echo "Started Packaging..."
         output=$( \
             helm package "${CHART_DIR}" \
                 --destination /tmp \
