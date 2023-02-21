@@ -3,6 +3,8 @@ set -o errexit
 set -o nounset
 set -o pipefail
 
+DEBUG=${DEBUG:-}
+[[ -n "${DEBUG}" ]] && set -x
 
 SCRIPT_DIR=$(dirname -- "$(readlink -f "${BASH_SOURCE[0]}" || realpath "${BASH_SOURCE[0]}")")
 export SCRIPT_DIR
