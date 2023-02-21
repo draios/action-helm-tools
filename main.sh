@@ -59,7 +59,7 @@ case "${ACTION}" in
         echo "$GAR_JSON_KEY" \
             | helm registry login -u _json_key --password-stdin "https://${GAR_URL}"
 
-        SHOW_CHART_VERSION=$(helm show chart "${CHART_DIR}" | grep 'version:' | sed 's#version:##g' | tr -d '[:space:]')
+        SHOW_CHART_VERSION=$(helm_show "${CHART_DIR}" "version")
         SHOW_CHART_APP_VERSION=$(helm_show "${CHART_DIR}" "appVersion")
 
         if [[ -n "$CHART_VERSION" ]]; then
@@ -75,7 +75,7 @@ case "${ACTION}" in
             echo "CHART_APP_VERSION was empty, packaging with version defined in Chart.yaml: '${SHOW_CHART_APP_VERSION}'."
             CHART_APP_VERSION="$SHOW_CHART_APP_VERSION"
 
-            if [[ -z "$SHOW_CHART_APP_VERSION" ]]; then
+            if [[ "$SHOW_CHART_APP_VERSION" == "UNSET" ]]; then
                 echo "SHOW_CHART_APP_VERSION was empty as well, packaging with default appVersion: '0.1.0'."
                 CHART_APP_VERSION="0.1.0"
             fi
