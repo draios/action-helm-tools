@@ -15,6 +15,16 @@ print_title(){
     echo "#####################################################"
 }
 
+function helm_show(){
+    local dir="$1"
+    local property="$2"
+
+    local value=""
+
+    value=$(helm show chart "$dir" | grep "$property:" | sed "s#$property:##g" | tr -d '[:space:]')
+
+    [[ -n "$value" ]] && echo "$value" || echo "UNSET"
+}
 
 get_chart_version(){
     if [ -n "$CHART_VERSION" ]; then
