@@ -19,9 +19,11 @@ function helm_show(){
     local dir="$1"
     local property="$2"
 
-    VALUE=$(helm show chart "$dir" | grep "$property:" | sed "s#$property:##g" | tr -d '[:space:]')
+    local value=""
 
-    [[ -n "$VALUE" ]] && echo "$VALUE" || echo "UNSET"
+    value=$(helm show chart "$dir" | grep "$property:" | sed "s#$property:##g" | tr -d '[:space:]')
+
+    [[ -n "$value" ]] && echo "$value" || echo "UNSET"
 }
 
 get_chart_version(){
