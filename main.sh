@@ -60,7 +60,7 @@ case "${ACTION}" in
             | helm registry login -u _json_key --password-stdin "https://${GAR_URL}"
 
         SHOW_CHART_VERSION=$(helm show chart "${CHART_DIR}" | grep 'version:' | sed 's#version:##g' | tr -d '[:space:]')
-        SHOW_CHART_APP_VERSION=$(helm show chart "${CHART_DIR}" | grep 'appVersion:' | sed 's#appVersion:##g' | tr -d '[:space:]')
+        SHOW_CHART_APP_VERSION=$(helm_show "${CHART_DIR}" "appVersion")
 
         if [[ -n "$CHART_VERSION" ]]; then
             echo "CHART_VERSION has been provided, packaging with this version: '${CHART_VERSION}'."
