@@ -72,12 +72,12 @@ case "${ACTION}" in
         if [[ -n "$CHART_APP_VERSION" ]]; then
             echo "CHART_APP_VERSION has been provided, packaging with this version: '${CHART_APP_VERSION}'."
         else
-            echo "CHART_APP_VERSION was empty, packaging with version defined in Chart.yaml: '${SHOW_CHART_APP_VERSION}'."
-            CHART_APP_VERSION="$SHOW_CHART_APP_VERSION"
-
             if [[ "$SHOW_CHART_APP_VERSION" == "UNSET" ]]; then
                 echo "SHOW_CHART_APP_VERSION was empty as well, packaging with default appVersion: '0.1.0'."
                 CHART_APP_VERSION="0.1.0"
+            else
+                echo "CHART_APP_VERSION was empty, packaging with version defined in Chart.yaml: '${SHOW_CHART_APP_VERSION}'."
+                CHART_APP_VERSION="$SHOW_CHART_APP_VERSION"
             fi
         fi
 
