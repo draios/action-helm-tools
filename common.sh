@@ -21,7 +21,7 @@ function helm_show(){
 
     local value=""
 
-    value=$(helm show chart "$dir" | grep "$property:" | sed "s#$property:##g" | tr -d '[:space:]')
+    value=$(helm show chart "$dir" | grep -E "^$property:" | head -1 | sed "s#$property:##g" | tr -d '[:space:]')
 
     [[ -n "$value" ]] && echo "$value" || echo "UNSET"
 }
