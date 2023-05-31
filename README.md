@@ -69,6 +69,7 @@ CHART_PREFIX: "YOURPREFIX"
 HELM_VERSION: # Override helm version. Default "3.5.1"
 KUBECTL_VERSION: # Override kubectl version. Default "1.21.0"
 HELM_ARTIFACTORY_PLUGIN_VERSION: # Override helm artifactory plugin version. Default "v1.0.2"
+HELM_CHARTMUSEUM_PLUGIN_VERSION: # Override helm chartmuseum plugin version. Default "0.10.3"
 CHART_VERSION: # If defined, override version in Chart.yaml file. Default is unset
 DEBUG: # If defined will set debug in shell script.
 ```

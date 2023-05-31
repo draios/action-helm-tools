@@ -4,6 +4,7 @@ set -eo pipefail
 export HELM_VERSION=${HELM_VERSION:="3.5.1"}
 export KUBECTL_VERSION=${KUBECTL_VERSION:="1.21.0"}
 export HELM_ARTIFACTORY_PLUGIN_VERSION=${HELM_ARTIFACTORY_PLUGIN_VERSION:="v1.0.2"}
+export HELM_CHARTMUSEUM_PLUGIN_VERSION=${HELM_CHARTMUSEUM_PLUGIN_VERSION:="0.10.3"}
 export CHART_VERSION=${CHART_VERSION:=""}
 export CHART_APP_VERSION=${CHART_APP_VERSION:=""}
 
@@ -73,7 +74,7 @@ install_artifactory_plugin(){
 install_cmpush_plugin(){
     print_title "Install helm cm-push plugin"
     if ! (helm plugin list  | grep -q cm-push); then
-	helm plugin install https://github.com/chartmuseum/helm-push --version ${HELM_ARTIFACTORY_PLUGIN_VERSION}
+	helm plugin install https://github.com/chartmuseum/helm-push --version ${HELM_CHARTMUSEUM_PLUGIN_VERSION}
     fi
 }
 
