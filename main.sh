@@ -38,7 +38,7 @@ case "${ACTION}" in
     "publish-chartmuseum")
         print_title "Push chart to chartmuseum"
         helm repo add amagi-charts "${ARTIFACTORY_URL}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}"  
-        helm cm-push "${CHART_DIR}" amagi-charts 
+        helm cm-push "${CHART_DIR}" amagi-charts | true 
         ;;
     "publish-gar")
         print_title "Push chart on OCI registry"
