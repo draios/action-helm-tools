@@ -11,7 +11,8 @@ _Note this action is written to specifically work with Helm repos in Artifactory
 `action` - `[package, test, publish]`
 
 - `package` - Involves helm client only and does dependency build, lint and package chart
-- `publish` - Uses helm artifactory plugin to uploads the chart
+- `publish-artifactory` - Uses helm artifactory plugin to uploads the chart
+- `publish-chartmuseum` - Uses helm cm plugin to uploads the chart
 - `publish-gar` - Uses helm (helm 3.8 or greater), to push on Google Artifactory Registry using OCI
 
 ## Required Environment variables
@@ -101,16 +102,25 @@ jobs:
           ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_HELM_USERNAME }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_HELM_PASSWORD }}
 
-      - name: "Helm publish"
+      - name: "Helm publish artifactory"
         uses: draios/action-helm-tools@v1.1.0
         with:
-          action: "publish"
+          action: "publish-artifactory"
         env:
           CHART_DIR: resources/helm/sdcadminoper
           ARTIFACTORY_URL: https://artifactory.internal.sysdig.com:443/artifactory/helm-local/
           ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_HELM_USERNAME }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_HELM_PASSWORD }}
 
+       - name: "Helm publish artifactory"
+        uses: draios/action-helm-tools@v1.1.0
+        with:
+          action: "publish-chartmuseum"
+        env:
+          CHART_DIR: resources/helm/sdcadminoper
+          ARTIFACTORY_URL: https://artifactory.internal.sysdig.com:443/artifactory/helm-local/
+          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_HELM_USERNAME }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_HELM_PASSWORD }}
 ```
 
 ## Another example for GAR

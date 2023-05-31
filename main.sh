@@ -12,6 +12,7 @@ source "$SCRIPT_DIR/common.sh"
 
 install_helm
 install_artifactory_plugin
+install_cmpush_plugin
 get_chart_version
 
 case "${ACTION}" in
@@ -30,9 +31,14 @@ case "${ACTION}" in
         print_title "Helm package"
         helm package "${CHART_DIR}" --version v"${CHART_VERSION}" --app-version "${CHART_VERSION}" --destination "${RUNNER_WORKSPACE}"
         ;;
-    "publish")
+    "publish-artifactory")
         print_title "Push chart"
         helm push-artifactory "${CHART_DIR}" "${ARTIFACTORY_URL}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}" --version "${CHART_VERSION}"
+        ;;
+    "publish-chartmuseum")
+        print_title "Push chart"
+        helm repo add amagi-charts "${ARTIFACTORY_URL}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}" --version "${CHART_VERSION}" 
+        helm cm-push "${CHART_DIR}" amagi-charts 
         ;;
     "publish-gar")
         print_title "Push chart on OCI registry"

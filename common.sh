@@ -70,8 +70,16 @@ install_artifactory_plugin(){
     fi
 }
 
+install_cmpush_plugin(){
+    print_title "Install helm cm-push plugin"
+    if ! (helm plugin list  | grep -q cm-push); then
+	helm plugin install https://github.com/chartmuseum/helm-push --version ${HELM_ARTIFACTORY_PLUGIN_VERSION}
+    fi
+}
+
 remove_helm(){
     helm plugin uninstall push-artifactory
+    helm plugin uninstall cm-push
     sudo rm -rf /usr/local/bin/helm
 }
 
