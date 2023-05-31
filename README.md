@@ -93,7 +93,7 @@ jobs:
     #   run:
 
       - name: "Helm publish"
-        uses: draios/action-helm-tools@v1.1.0
+        uses: rarchk/action-helm-tools@v1.1.0
         with:
           action: "package"
         env:
@@ -103,7 +103,7 @@ jobs:
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_HELM_PASSWORD }}
 
       - name: "Helm publish artifactory"
-        uses: draios/action-helm-tools@v1.1.0
+        uses: rarchk/action-helm-tools@v1.1.0
         with:
           action: "publish-artifactory"
         env:
@@ -112,15 +112,6 @@ jobs:
           ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_HELM_USERNAME }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_HELM_PASSWORD }}
 
-       - name: "Helm publish artifactory"
-        uses: draios/action-helm-tools@v1.1.0
-        with:
-          action: "publish-chartmuseum"
-        env:
-          CHART_DIR: resources/helm/sdcadminoper
-          ARTIFACTORY_URL: https://artifactory.internal.sysdig.com:443/artifactory/helm-local/
-          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_HELM_USERNAME }}
-          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_HELM_PASSWORD }}
 ```
 
 ## Another example for GAR
@@ -135,7 +126,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       - name: "Helm Publish on GAR"
-        uses: draios/action-helm-tools@v1.2.0
+        uses: rarchk/action-helm-tools@v1.2.0
         with:
           action: "publish-gar"
         env:
@@ -149,4 +140,24 @@ jobs:
           GAR_URL: "us-docker.pkg.dev"
           GAR_JSON_KEY: "${{ secrets.GAR_DEV_RW_JSON_KEY }}"
           CHART_PREFIX: "YOUR_PREFIX"
+```
+## Addon for chart-museum
+```yaml
+name: Helm lint, test, package and publish
+on: pull_request
+
+jobs:
+  helm-suite:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      - name: "Helm publish artifactory"
+        uses: rarchk/action-helm-tools@v1.1.0
+        with:
+          action: "publish-chartmuseum"
+        env:
+          CHART_DIR: resources/helm/sdcadminoper
+          ARTIFACTORY_URL: https://artifactory.internal.sysdig.com:443/artifactory/helm-local/
+          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_HELM_USERNAME }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_HELM_PASSWORD }}
 ```
