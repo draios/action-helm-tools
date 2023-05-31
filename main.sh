@@ -32,12 +32,12 @@ case "${ACTION}" in
         helm package "${CHART_DIR}" --version v"${CHART_VERSION}" --app-version "${CHART_VERSION}" --destination "${RUNNER_WORKSPACE}"
         ;;
     "publish-artifactory")
-        print_title "Push chart"
+        print_title "Push chart to artifactory"
         helm push-artifactory "${CHART_DIR}" "${ARTIFACTORY_URL}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}" --version "${CHART_VERSION}"
         ;;
     "publish-chartmuseum")
-        print_title "Push chart"
-        helm repo add amagi-charts "${ARTIFACTORY_URL}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}" --version "${CHART_VERSION}" 
+        print_title "Push chart to chartmuseum"
+        helm repo add amagi-charts "${ARTIFACTORY_URL}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}"  
         helm cm-push "${CHART_DIR}" amagi-charts 
         ;;
     "publish-gar")
