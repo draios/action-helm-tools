@@ -40,17 +40,21 @@ case "${ACTION}" in
         else
             touch /tmp/upstream_values.yaml
         fi
+        print_title "upstream values"
+        cat /tmp/upstream_values.yaml
 
         # checkout current
         echo git checkout -b current_branch origin/"${CURRENT_BRANCH}"
         git checkout -b current_branch origin/"${CURRENT_BRANCH}"
         if [[ -f "${CHART_DIR}/chart.yaml" ]]; then
             # chart does not exists
+            echo foo
             helm template "${CHART_DIR}" > /tmp/current_values.yaml
         else
             touch /tmp/current_values.yaml
         fi
-
+        print_title "Current values"
+        cat /tmp/currernt_values.yaml
         # Compute diff between two releases
         set +e
         OUTPUT=$(sh -c "dyff between /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
@@ -70,10 +74,20 @@ case "${ACTION}" in
         \`\`\`
         </details>"
 
-        PAYLOAD=$(echo '{}' | jq --arg body "$COMMENT" '.body = $body')
-        COMMENTS_URL=$(cat /github/workflow/event.json | jq -r .pull_request.comments_url)
-        echo "Commenting on PR $COMMENTS_URL"
-        curl -s -S -H "Authorization: token $GITHUB_TOKEN" --header "Content-Type: application/json" --data "$PAYLOAD" "$COMMENTS_URL"
+        set -x
+        cat << EOM > body.json
+        {
+          "body": "${COMMENT}"
+        }
+        EOM
+        cat body.json
+        ls -R /github
+
+        curl --silent -X POST \
+          --header 'content-type: application/json' \
+          --header 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
+          "https://api.github.com/repos/${{ github.repository }}/issues/${GITHUB_PR_NUMBER}/comments" \
+          --data "@body.json"
         exit $SUCCESS
         ;;
     "package")
