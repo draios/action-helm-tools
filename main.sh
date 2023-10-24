@@ -34,12 +34,22 @@ case "${ACTION}" in
         # checkout upstream
         echo git checkout -b upstream_branch origin/"${UPSTREAM_BRANCH}"
         git checkout -b upstream_branch origin/"${UPSTREAM_BRANCH}"
-        helm template "${CHART_DIR}" > /tmp/upstream_values.yaml
+        if [[ -f "${CHART_DIR}/chart.yaml" ]]; then
+            # chart does not exists
+            helm template "${CHART_DIR}" > /tmp/upstream_values.yaml
+        else
+            touch /tmp/upstream_values.yaml
+        fi
 
         # checkout current
         echo git checkout -b current_branch origin/"${CURRENT_BRANCH}"
         git checkout -b current_branch origin/"${CURRENT_BRANCH}"
-        helm template "${CHART_DIR}" > /tmp/current_values.yaml
+        if [[ -f "${CHART_DIR}/chart.yaml" ]]; then
+            # chart does not exists
+            helm template "${CHART_DIR}" > /tmp/current_values.yaml
+        else
+            touch /tmp/current_values.yaml
+        fi
 
         # Compute diff between two releases
         set +e
