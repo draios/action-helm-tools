@@ -30,11 +30,14 @@ case "${ACTION}" in
         fi
 
         print_title "Helm diff"
+        git fetch -a
         # checkout upstream
+        echo git checkout -b upstream_branch origin/"${UPSTREAM_BRANCH}"
         git checkout -b upstream_branch origin/"${UPSTREAM_BRANCH}"
         helm template "${CHART_DIR}" > /tmp/upstream_values.yaml
 
         # checkout current
+        echo git checkout -b current_branch origin/"${CURRENT_BRANCH}"
         git checkout -b current_branch origin/"${CURRENT_BRANCH}"
         helm template "${CHART_DIR}" > /tmp/current_values.yaml
 
