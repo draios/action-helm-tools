@@ -14,8 +14,55 @@ install_helm
 install_artifactory_plugin
 install_cmpush_plugin
 get_chart_version
+install_dyff
 
 case "${ACTION}" in
+    "pre-commit")
+        print_title "Helm dependency build"
+        helm dependency build "${CHART_DIR}"
+
+        print_title "Linting"
+        if [[ -f "${CHART_DIR}/linter_values.yaml" ]]; then
+            # allow for the same yaml layout that is used by gruntwork-io/pre-commit helmlint.sh
+            helm lint -f "${CHART_DIR}/values.yaml" -f "${CHART_DIR}/linter_values.yaml" "${CHART_DIR}"
+        else
+            helm lint "${CHART_DIR}"
+        fi
+
+        print_title "Helm diff"
+        # checkout upstream
+        git checkout -b upstream_branch origin/"${UPSTREAM_BRANCH}"
+        helm template "${CHART_DIR}" > /tmp/upstream_values.yaml
+
+        # checkout current
+        git checkout -b current_branch origin/"${CURRENT_BRANCH}"
+        helm template "${CHART_DIR}" > /tmp/current_values.yaml
+
+        # Compute diff between two releases
+        set +e
+        OUTPUT=$(sh -c "dyff between /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
+        if [ $? -ge 2 ]; then
+            diff /tmp/upstream_values.yaml /tmp/current_values.yaml
+        fi
+        SUCCESS=$?
+        echo "$OUTPUT"
+        set -e
+
+        # COMMENT STRUCTURE
+        COMMENT="#### \`helm diff \` Output
+        <details>
+        <summary>Details</summary>
+        \`\`\`
+        $OUTPUT
+        \`\`\`
+        </details>"
+
+        PAYLOAD=$(echo '{}' | jq --arg body "$COMMENT" '.body = $body')
+        COMMENTS_URL=$(cat /github/workflow/event.json | jq -r .pull_request.comments_url)
+        echo "Commenting on PR $COMMENTS_URL"
+        curl -s -S -H "Authorization: token $GITHUB_TOKEN" --header "Content-Type: application/json" --data "$PAYLOAD" "$COMMENTS_URL"
+        exit $SUCCESS
+        ;;
     "package")
         print_title "Helm dependency build"
         helm dependency build "${CHART_DIR}"
@@ -37,8 +84,8 @@ case "${ACTION}" in
         ;;
     "publish-chartmuseum")
         print_title "Push chart to chartmuseum"
-        helm repo add amagi-charts "${ARTIFACTORY_URL}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}"  
-        helm cm-push "${CHART_DIR}" amagi-charts || true 
+        helm repo add amagi-charts "${ARTIFACTORY_URL}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}"
+        helm cm-push "${CHART_DIR}" amagi-charts || true
         ;;
     "publish-gar")
         print_title "Push chart on OCI registry"

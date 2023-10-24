@@ -7,6 +7,7 @@ export HELM_ARTIFACTORY_PLUGIN_VERSION=${HELM_ARTIFACTORY_PLUGIN_VERSION:="v1.0.
 export HELM_CHARTMUSEUM_PLUGIN_VERSION=${HELM_CHARTMUSEUM_PLUGIN_VERSION:="0.10.3"}
 export CHART_VERSION=${CHART_VERSION:=""}
 export CHART_APP_VERSION=${CHART_APP_VERSION:=""}
+export DYFF_VERSION=${DYFF_VERSION:="1.6.0"}
 
 export GCLOUD_PROJECT_CHECK=${GCLOUD_PROJECT_CHECK:="true"}
 
@@ -94,4 +95,21 @@ check_helm_version_gte_3_8(){
         echo "Required helm version a least 3.8.0 currently running '${current_helm_version}'."
         exit 1
     fi
+}
+
+install_dyff() {
+    if ! command -v dyff; then
+        echo "dyff is missing"
+        get_dyff
+    elif ! [[ $(dyff version) == *${DYFF_VERSION}* ]]; then
+        echo "dyfff $(dyff version) is not desired version"
+        get_dyff
+    fi
+}
+
+get_dyff() {
+    print_title "Get dyff:${DYFF_VERSION}"
+    curl -L "https://github.com/homeport/dyff/releases/download/v${DYFF_VERSION}/dyff_${DYFF_VERSION}_linux_amd64.tar.gz" | tar xvz
+    chmod +x dyff
+    sudo mv dyff /usr/local/bin/dyff
 }

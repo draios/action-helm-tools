@@ -10,6 +10,7 @@ _Note this action is written to specifically work with Helm repos in Artifactory
 
 `action` - `[package, test, publish]`
 
+- `pre-commit` - Runs pre-commit checks on helm including linting, validation, tests, diff
 - `package` - Involves helm client only and does dependency build, lint and package chart
 - `publish-artifactory` - Uses helm artifactory plugin to uploads the chart
 - `publish-chartmuseum` - Uses helm cm plugin to uploads the chart
@@ -61,6 +62,8 @@ GAR_JSON_KEY: "${{ secrets.GAR_DEV_RW_JSON_KEY }}"
 # The chart prefix is used to distinguish from app container
 # images with the same name pushed on GAR.
 CHART_PREFIX: "YOURPREFIX"
+UPSTREAM_BRANCH: "main"
+CURRENT_BRANCH: "Add your current branch"
 ```
 
 ## Optional Environment variables
@@ -92,6 +95,7 @@ jobs:
 
     # - name: myOtherJob1
     #   run:
+
 
       - name: "Helm publish"
         uses: rarchk/action-helm-tools@v1.1.0
@@ -151,7 +155,7 @@ jobs:
   helm-suite:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       - name: "Helm publish artifactory"
         uses: rarchk/action-helm-tools@v1.1.0
         with:
