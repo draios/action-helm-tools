@@ -167,3 +167,48 @@ jobs:
           ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_HELM_USERNAME }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_HELM_PASSWORD }}
 ```
+
+## Diff as a template
+Diff can be used to compute differences between complex helm distributions
+
+```mermaid
+graph TD
+subgraph ComplexHelmDistributions
+HelmFile --> ListOfHelmCharts
+CustomRelease --> ListOfHelmCharts
+end
+
+subgraph CD_Workflows
+ArgoCDApplication --> HelmChart
+end
+subgraph HELM_Repos
+B[HelmChart]
+end
+
+CD_Workflows --> D
+ComplexHelmDistributions -.-> D
+ComplexHelmDistributions -.-> D
+ComplexHelmDistributions -.-> D
+HELM_Repos --> D
+D[[Diff Action Template]]
+D --> C(fa:fa-genderless)
+```
+### Algorithm
+1. We would need previous and next version
+2. We would need access to remote chart repository
+3. We can use this command to generate templates locally and remotely
+4. We take following inputs
+   1. previous version
+   2. current version[optional] or can be generated locally
+
+```bash
+# local templating
+helm template <chart_name>.tgz -f values.yaml
+
+# remote templating
+helm template <remote_repo>/chart_name --version 1.17.1 -f values.yaml
+
+# search for all versions
+helm search repo <remote_repo>/chart_name --versions
+```
+4. Diff it
