@@ -10,7 +10,8 @@ _Note this action is written to specifically work with Helm repos in Artifactory
 
 `action` - `[package, test, publish]`
 
-- `pre-commit` - Runs pre-commit checks on helm including linting, validation, tests, diff
+- `lint` - Runs helm linter along with dependency build.
+- `diff` - Runs helm diff using templates along with dependency build.
 - `package` - Involves helm client only and does dependency build, lint and package chart
 - `publish-artifactory` - Uses helm artifactory plugin to uploads the chart
 - `publish-chartmuseum` - Uses helm cm plugin to uploads the chart
