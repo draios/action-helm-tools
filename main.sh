@@ -60,8 +60,8 @@ case "${ACTION}" in
         OUTPUT=$(sh -c "dyff between /tmp/upstream_values.yaml /tmp/current_values.yaml -c on" 2>&1)
         OUTPUT1=$(sh -c "dyff between /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
         if [ $? -ge 2 ]; then
-            OUTPUT=$(sh -c "diff --color /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
-            OUTPUT1=$(sh -c "diff /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
+            OUTPUT=$(sh -c "diff -u --color /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
+            OUTPUT1=$(sh -c "diff -u /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
         fi
         SUCCESS=$?
         echo -e '\033[1mComputed Helm Diff\033[0m'
@@ -71,7 +71,12 @@ case "${ACTION}" in
         COMMENT="#### \`Computed Helm Diff\` Output
 <details>
 <summary>Details</summary>
+
+
+```bash
 $OUTPUT1
+```
+
 </details>"
         PAYLOAD=$(echo '{}' | jq --arg body "$COMMENT" '.body = $body')
 
