@@ -61,7 +61,7 @@ case "${ACTION}" in
         OUTPUT1=$(sh -c "dyff between /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
         if [ $? -ge 2 ]; then
             OUTPUT=$(sh -c "diff --color /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
-            OUTPUT1=$(sh -c "diff /tmp/ upstream_values.yaml /tmp/current_values.yaml" 2>&1)
+            OUTPUT1=$(sh -c "diff /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
         fi
         SUCCESS=$?
         set -e
