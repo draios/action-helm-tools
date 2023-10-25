@@ -34,7 +34,7 @@ case "${ACTION}" in
         helm dependency build "${CHART_DIR}"
         print_title "Computing Helm diff"
         git fetch -a
-        
+
         if [[ -f "${CHART_DIR}/Chart.yaml" ]]; then
             helm template "${CHART_DIR}" > /tmp/current_values.yaml
         else
@@ -54,7 +54,7 @@ case "${ACTION}" in
             touch /tmp/upstream_values.yaml
             printf "\x1B[31m ChartFileDoesNotExists: Will create empty template\n"
         fi
-        
+
         # Compute diff between two releases
         set +e
         OUTPUT=$(sh -c "dyff between /tmp/upstream_values.yaml /tmp/current_values.yaml -c on" 2>&1)
