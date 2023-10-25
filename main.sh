@@ -17,19 +17,22 @@ get_chart_version
 install_dyff
 
 case "${ACTION}" in
-    "pre-commit")
+    "lint")
         print_title "Helm dependency build"
         helm dependency build "${CHART_DIR}"
 
-        print_title "Linting"
+        print_title "Helm Linting"
         if [[ -f "${CHART_DIR}/linter_values.yaml" ]]; then
             # allow for the same yaml layout that is used by gruntwork-io/pre-commit helmlint.sh
             helm lint -f "${CHART_DIR}/values.yaml" -f "${CHART_DIR}/linter_values.yaml" "${CHART_DIR}"
         else
             helm lint "${CHART_DIR}"
         fi
-
-        print_title "Helm diff"
+        ;;
+    "diff")
+        print_title "Helm dependency build"
+        helm dependency build "${CHART_DIR}"
+        print_title "Computing Helm diff"
         git fetch -a
         # checkout upstream
         echo git checkout -b upstream_branch origin/"${UPSTREAM_BRANCH}"
@@ -39,55 +42,45 @@ case "${ACTION}" in
             helm template "${CHART_DIR}" > /tmp/upstream_values.yaml
         else
             touch /tmp/upstream_values.yaml
+            printf "\x1B[31m ChartFileDoesNotExists: Will create empty template\n"
         fi
-        print_title "upstream values"
-        cat /tmp/upstream_values.yaml
-
         # checkout current
         echo git checkout -b current_branch origin/"${CURRENT_BRANCH}"
         git checkout -b current_branch origin/"${CURRENT_BRANCH}"
         if [[ -f "${CHART_DIR}/chart.yaml" ]]; then
             # chart does not exists
-            echo foo
             helm template "${CHART_DIR}" > /tmp/current_values.yaml
         else
             touch /tmp/current_values.yaml
+            printf "\x1B[31m ChartFileDoesNotExists: Will create empty template\n"
         fi
-        print_title "Current values"
-        cat /tmp/currernt_values.yaml
         # Compute diff between two releases
         set +e
-        OUTPUT=$(sh -c "dyff between /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
+        OUTPUT=$(sh -c "dyff between /tmp/upstream_values.yaml /tmp/current_values.yaml -c on" 2>&1)
+        OUTPUT1=$(sh -c "dyff between /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
         if [ $? -ge 2 ]; then
-            diff /tmp/upstream_values.yaml /tmp/current_values.yaml
+            OUTPUT=$(sh -c "diff --color /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
+            OUTPUT1=$(sh -c "diff /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
         fi
         SUCCESS=$?
-        echo "$OUTPUT"
         set -e
 
         # COMMENT STRUCTURE
-        COMMENT="#### \`helm diff \` Output
+        COMMENT="#### \`Computed Helm Diff\` Output
         <details>
         <summary>Details</summary>
         \`\`\`
-        $OUTPUT
+        $OUTPUT1
         \`\`\`
         </details>"
-
-        set -x
-        cat << EOM > body.json
-        {
-          "body": "${COMMENT}"
-        }
-        EOM
-        cat body.json
-        ls -R /github
-
+        PAYLOAD=$(echo '{}' | jq --arg body "$COMMENT" '.body = $body')
+        echo -e '\033[1mComputed Helm Diff\033[0m'
+        printf "$OUTPUT"
         curl --silent -X POST \
           --header 'content-type: application/json' \
           --header 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
-          "https://api.github.com/repos/${{ github.repository }}/issues/${GITHUB_PR_NUMBER}/comments" \
-          --data "@body.json"
+          "https://api.github.com/repos/${{ github.repository }}/issues/${{github.event.pull_request.number}}/comments" \
+          --data "$PAYLOAD"
         exit $SUCCESS
         ;;
     "package")
