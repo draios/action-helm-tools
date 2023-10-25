@@ -34,26 +34,27 @@ case "${ACTION}" in
         helm dependency build "${CHART_DIR}"
         print_title "Computing Helm diff"
         git fetch -a
-        # checkout upstream
-        echo git checkout -b upstream_branch origin/"${UPSTREAM_BRANCH}"
-        git checkout -b upstream_branch origin/"${UPSTREAM_BRANCH}"
-        if [[ -f "${CHART_DIR}/chart.yaml" ]]; then
-            # chart does not exists
-            helm template "${CHART_DIR}" > /tmp/upstream_values.yaml
-        else
-            touch /tmp/upstream_values.yaml
-            printf "\x1B[31m ChartFileDoesNotExists: Will create empty template\n"
-        fi
-        # checkout current
-        echo git checkout -b current_branch origin/"${CURRENT_BRANCH}"
-        git checkout -b current_branch origin/"${CURRENT_BRANCH}"
-        if [[ -f "${CHART_DIR}/chart.yaml" ]]; then
-            # chart does not exists
+
+        if [[ -f "${CHART_DIR}/Chart.yaml" ]]; then
             helm template "${CHART_DIR}" > /tmp/current_values.yaml
         else
+            ls "${CHART_DIR}" || true
             touch /tmp/current_values.yaml
             printf "\x1B[31m ChartFileDoesNotExists: Will create empty template\n"
         fi
+
+        # checkout upstream
+        echo git checkout -b upstream_branch origin/"${UPSTREAM_BRANCH}"
+        git checkout -b upstream_branch origin/"${UPSTREAM_BRANCH}"
+        if [[ -f "${CHART_DIR}/Chart.yaml" ]]; then
+            # chart does not exists
+            helm template "${CHART_DIR}" > /tmp/upstream_values.yaml
+        else
+            ls "${CHART_DIR}" || true
+            touch /tmp/upstream_values.yaml
+            printf "\x1B[31m ChartFileDoesNotExists: Will create empty template\n"
+        fi
+
         # Compute diff between two releases
         set +e
         OUTPUT=$(sh -c "dyff between /tmp/upstream_values.yaml /tmp/current_values.yaml -c on" 2>&1)
@@ -66,26 +67,22 @@ case "${ACTION}" in
         set -e
 
         echo -e '\033[1mComputed Helm Diff\033[0m'
-        printf "$OUTPUT"
+        printf "$OUTPUT\n"
 
         # COMMENT STRUCTURE
         COMMENT="#### \`Computed Helm Diff\` Output
         <details>
         <summary>Details</summary>
-        \`\`\`
         $OUTPUT1
-        \`\`\`
         </details>"
         PAYLOAD=$(echo '{}' | jq --arg body "$COMMENT" '.body = $body')
-        # curl --silent -X POST \
-        #   --header 'content-type: application/json' \
-        #   --header 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
-        #   "https://api.github.com/repos/${{ github.repository }}/issues/${{github.event.pull_request.number}}/comments" \
-        #   --data "$PAYLOAD"
 
         COMMENTS_URL=$(cat "$GITHUB_EVENT_PATH" | jq -r .pull_request.comments_url)
         echo "Commenting on PR $COMMENTS_URL"
-        curl -s -S -H "Authorization: token $GITHUB_TOKEN" --header "Content-Type: application/json" --data "$PAYLOAD" "$COMMENTS_URL"
+        curl --silent -X POST \
+          --header 'content-type: application/json' \
+          --header  "Authorization: token $GITHUB_TOKEN" \
+          --data "$PAYLOAD" "$COMMENTS_URL"
         exit $SUCCESS
         ;;
     "package")
