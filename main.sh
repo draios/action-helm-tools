@@ -79,7 +79,7 @@ case "${ACTION}" in
         curl --silent -X POST \
           --header 'content-type: application/json' \
           --header 'Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}' \
-          "https://api.github.com/repos/${{ github.repository }}/issues/${GITHUB_PR_NUMBER}/comments" \
+          "https://api.github.com/repos/${{ github.repository }}/issues/${{github.event.pull_request.number}}/comments" \
           --data "$PAYLOAD"
         exit $SUCCESS
         ;;
