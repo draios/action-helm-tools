@@ -64,17 +64,15 @@ case "${ACTION}" in
             OUTPUT1=$(sh -c "diff /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
         fi
         SUCCESS=$?
-        set -e
-
         echo -e '\033[1mComputed Helm Diff\033[0m'
         printf "$OUTPUT\n"
 
         # COMMENT STRUCTURE
         COMMENT="#### \`Computed Helm Diff\` Output
-        <details>
-        <summary>Details</summary>
-        $OUTPUT1
-        </details>"
+<details>
+<summary>Details</summary>
+$OUTPUT1
+</details>"
         PAYLOAD=$(echo '{}' | jq --arg body "$COMMENT" '.body = $body')
 
         COMMENTS_URL=$(cat "$GITHUB_EVENT_PATH" | jq -r .pull_request.comments_url)
@@ -82,8 +80,8 @@ case "${ACTION}" in
         curl --silent -X POST \
           --header 'content-type: application/json' \
           --header  "Authorization: token $GITHUB_TOKEN" \
-          --data "$PAYLOAD" "$COMMENTS_URL"
-        exit $SUCCESS
+          --data "$PAYLOAD" "$COMMENTS_URL" > /dev/null
+        exit 0
         ;;
     "package")
         print_title "Helm dependency build"
