@@ -12,6 +12,7 @@ _Note this action is written to specifically work with Helm repos in Artifactory
 
 - `lint` - Runs helm linter along with dependency build.
 - `diff` - Runs helm diff using templates along with dependency build.
+- `audit` - Runs audit on helm files
 - `package` - Involves helm client only and does dependency build, lint and package chart
 - `publish-artifactory` - Uses helm artifactory plugin to uploads the chart
 - `publish-chartmuseum` - Uses helm cm plugin to uploads the chart
@@ -84,7 +85,7 @@ DEBUG: # If defined will set debug in shell script.
 Never use `main` branch in your github workflows!
 
 ```yaml
-name: Helm lint, test, package and publish
+name: Helm lint, test, package, publish, audit, diff
 
 on: pull_request
 
@@ -158,7 +159,7 @@ jobs:
     steps:
     - uses: actions/checkout@v3
       - name: "Helm publish artifactory"
-        uses: rarchk/action-helm-tools@v1.1.0
+        uses: rarchk/action-helm-tools@v1.2.0
         with:
           action: "publish-chartmuseum"
         env:
@@ -212,3 +213,47 @@ helm template <remote_repo>/chart_name --version 1.17.1 -f values.yaml
 helm search repo <remote_repo>/chart_name --versions
 ```
 4. Diff it
+
+
+### Workflow Example
+```yaml
+      - run: sh -c "sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq"
+        name: setup yq
+
+      - name: Get upstream chart version
+        id: lookupChartVersion
+        run: |
+          sh -c "echo result=$(git fetch -a; git show origin/${{ steps.branch-name.outputs.base_ref_branch }}:${{ matrix.dir }}/Chart.yaml  | yq .version) >> $GITHUB_OUTPUT"
+
+      - name: Get upstream chart name
+        id: lookupChartName
+        run: |
+          sh -c "echo result=$(yq .name <  ${{ matrix.dir }}/Chart.yaml) >> $GITHUB_OUTPUT"
+
+
+      - name: "Helm diff"
+        id: diff
+        uses: rarchk/action-helm-tools@v1.2.0
+        env:
+          ACTION: "diff"
+          FROM_CHART: "${{ steps.lookupChartVersion.outputs.result }}"
+          TO_CHART: ""
+          CHART_DIR: "${{ matrix.dir }}" #In case TO_CHART is not available
+          CHART_NAME: "${{ steps.lookupChartName.outputs.result }}"
+          OPTIONAL_VALUES: "app.ingress.enabled=false"
+          ARTIFACTORY_URL: ""
+          ARTIFACTORY_USERNAME:  ""
+          ARTIFACTORY_PASSWORD:  ""
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+```
+
+## Audit example
+It statically audits k8s resources
+```yaml
+      - name: "Helm audit"
+        uses: rarchk/action-helm-tools@v1.2.0
+        env:
+          ACTION: "audit"
+          CHART_DIR: "${{ matrix.dir }}"
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+```

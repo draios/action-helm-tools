@@ -10,12 +10,11 @@ SCRIPT_DIR=$(dirname -- "$(readlink -f "${BASH_SOURCE[0]}" || realpath "${BASH_S
 export SCRIPT_DIR
 source "$SCRIPT_DIR/common.sh"
 
+install_ark
 install_helm
 install_artifactory_plugin
 install_cmpush_plugin
 get_chart_version
-install_dyff
-
 case "${ACTION}" in
     "lint")
         print_title "Helm dependency build"
@@ -29,64 +28,64 @@ case "${ACTION}" in
             helm lint "${CHART_DIR}"
         fi
         ;;
+    "audit")
+        install_polaris
+        print_title "Helm dependency build"
+        helm dependency build "${CHART_DIR}"
+
+        print_title "Helm audit"
+        polaris audit --helm-chart  "${CHART_DIR}" --helm-values "${CHART_DIR}/values.yaml" --format=pretty --quiet
+ 
+        send_github_comments "Computed Audit for ${CHART_DIR}"  "$(helm template ${CHART_DIR} -f ${CHART_DIR}/values.yaml  | kube-score score -)"
+
+        ;;
     "diff")
+        install_dyff
         print_title "Helm dependency build"
         helm dependency build "${CHART_DIR}"
         print_title "Computing Helm diff"
-        git fetch -a
 
-        if [[ -f "${CHART_DIR}/Chart.yaml" ]]; then
-            helm template "${CHART_DIR}" > /tmp/current_values.yaml
-        else
-            ls "${CHART_DIR}" || true
-            touch /tmp/current_values.yaml
-            printf "\x1B[31m ChartFileDoesNotExists: Will create empty template\n"
-        fi
+        # Setup repo
+        safe_exec helm repo add upstream-helm-repo "${ARTIFACTORY_URL}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}"
+        safe_exec helm repo update upstream-helm-repo
 
-        # checkout upstream
-        echo git checkout -b upstream_branch origin/"${UPSTREAM_BRANCH}"
-        git checkout -b upstream_branch origin/"${UPSTREAM_BRANCH}"
-        if [[ -f "${CHART_DIR}/Chart.yaml" ]]; then
-            # chart does not exists
-            helm template "${CHART_DIR}" > /tmp/upstream_values.yaml
-        else
-            ls "${CHART_DIR}" || true
+        # Fetch from chart
+        if [[ -z "${FROM_CHART}" ]]; then
             touch /tmp/upstream_values.yaml
-            printf "\x1B[31m ChartFileDoesNotExists: Will create empty template\n"
+            printf "\x1B[31m FROM_CHART: Will create empty template\n"
+        else
+            helm fetch "upstream-helm-repo/${CHART_NAME}" --version "${FROM_CHART}" --debug
+            if [[ -z "${OPTIONAL_VALUES}" ]]; then
+                helm template "${CHART_NAME}-${FROM_CHART}.tgz" -f "${CHART_DIR}/values.yaml" > /tmp/upstream_values.yaml
+            else
+                helm template "${CHART_NAME}-${FROM_CHART}.tgz" -f "${CHART_DIR}/values.yaml" --set "${OPTIONAL_VALUES}" > /tmp/upstream_values.yaml
+            fi
         fi
 
+        ## Fecth To chart
+        if [[ -z "${TO_CHART}" ]]; then
+            if [[ -f "${CHART_DIR}/Chart.yaml" ]]; then
+                if [[ -z "${OPTIONAL_VALUES}" ]]; then
+                    helm template "${CHART_DIR}" -f "${CHART_DIR}/values.yaml"  > /tmp/current_values.yaml
+                else
+                    helm template "${CHART_DIR}" -f "${CHART_DIR}/values.yaml" --set "${OPTIONAL_VALUES}" > /tmp/current_values.yaml
+                fi               
+            else
+                touch /tmp/current_values.yaml
+                printf "\x1B[31m FROM_CHART: Will create empty template\n"
+            fi
+        else
+            helm fetch "upstream-helm-repo/${CHART_NAME}" --version "${TO_CHART}" --debug
+            if [[ -z "${OPTIONAL_VALUES}" ]]; then
+                helm template "${CHART_NAME}-${TO_CHART}.tgz" -f "${CHART_DIR}/values.yaml" > /tmp/current_values.yaml
+            else
+                helm template "${CHART_NAME}-${TO_CHART}.tgz" -f "${CHART_DIR}/values.yaml" --set "${OPTIONAL_VALUES}" > /tmp/current_values.yaml
+            fi
+        fi
         # Compute diff between two releases
-        set +e
-        OUTPUT=$(sh -c "dyff between /tmp/upstream_values.yaml /tmp/current_values.yaml -c on" 2>&1)
-        OUTPUT1=$(sh -c "dyff between /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
-        if [ $? -ge 2 ]; then
-            OUTPUT=$(sh -c "diff --color /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
-            OUTPUT1=$(sh -c "diff /tmp/upstream_values.yaml /tmp/current_values.yaml" 2>&1)
-        fi
-        SUCCESS=$?
-        echo -e '\033[1mComputed Helm Diff\033[0m'
-        printf "$OUTPUT\n"
+        dyff between -i /tmp/upstream_values.yaml /tmp/current_values.yaml
+        send_github_comments "Computed Helm Diff for ${CHART_DIR}"  "$(dyff between -i --omit-header  /tmp/upstream_values.yaml /tmp/current_values.yaml)"
 
-        # COMMENT STRUCTURE
-        COMMENT="#### \`Computed Helm Diff\` Output
-<details>
-<summary>Details</summary>
-
-
-\`\`\`bash
-$OUTPUT1
-\`\`\`
-
-</details>"
-        PAYLOAD=$(echo '{}' | jq --arg body "$COMMENT" '.body = $body')
-
-        COMMENTS_URL=$(cat "$GITHUB_EVENT_PATH" | jq -r .pull_request.comments_url)
-        echo "Commenting on PR $COMMENTS_URL"
-        curl --silent -X POST \
-          --header 'content-type: application/json' \
-          --header  "Authorization: token $GITHUB_TOKEN" \
-          --data "$PAYLOAD" "$COMMENTS_URL" > /dev/null
-        exit 0
         ;;
     "package")
         print_title "Helm dependency build"
@@ -109,8 +108,8 @@ $OUTPUT1
         ;;
     "publish-chartmuseum")
         print_title "Push chart to chartmuseum"
-        helm repo add amagi-charts "${ARTIFACTORY_URL}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}"
-        helm cm-push "${CHART_DIR}" amagi-charts || true
+        helm repo add upstream-helm-repo "${ARTIFACTORY_URL}" --username "${ARTIFACTORY_USERNAME}" --password "${ARTIFACTORY_PASSWORD}"
+        helm cm-push "${CHART_DIR}" upstream-helm-repo || true
         ;;
     "publish-gar")
         print_title "Push chart on OCI registry"
@@ -173,3 +172,4 @@ $OUTPUT1
 esac
 
 remove_helm
+remove_ark
