@@ -10,8 +10,12 @@ _Note this action is written to specifically work with Helm repos in Artifactory
 
 `action` - `[package, test, publish]`
 
+- `lint` - Runs helm linter along with dependency build.
+- `diff` - Runs helm diff using templates along with dependency build.
+- `audit` - Runs audit on helm files
 - `package` - Involves helm client only and does dependency build, lint and package chart
-- `publish` - Uses helm artifactory plugin to uploads the chart
+- `publish-artifactory` - Uses helm artifactory plugin to uploads the chart
+- `publish-chartmuseum` - Uses helm cm plugin to uploads the chart
 - `publish-gar` - Uses helm (helm 3.8 or greater), to push on Google Artifactory Registry using OCI
 
 ## Required Environment variables
@@ -60,6 +64,8 @@ GAR_JSON_KEY: "${{ secrets.GAR_DEV_RW_JSON_KEY }}"
 # The chart prefix is used to distinguish from app container
 # images with the same name pushed on GAR.
 CHART_PREFIX: "YOURPREFIX"
+UPSTREAM_BRANCH: "main"
+CURRENT_BRANCH: "Add your current branch"
 ```
 
 ## Optional Environment variables
@@ -68,6 +74,7 @@ CHART_PREFIX: "YOURPREFIX"
 HELM_VERSION: # Override helm version. Default "3.5.1"
 KUBECTL_VERSION: # Override kubectl version. Default "1.21.0"
 HELM_ARTIFACTORY_PLUGIN_VERSION: # Override helm artifactory plugin version. Default "v1.0.2"
+HELM_CHARTMUSEUM_PLUGIN_VERSION: # Override helm chartmuseum plugin version. Default "0.10.3"
 CHART_VERSION: # If defined, override version in Chart.yaml file. Default is unset
 DEBUG: # If defined will set debug in shell script.
 ```
@@ -78,7 +85,7 @@ DEBUG: # If defined will set debug in shell script.
 Never use `main` branch in your github workflows!
 
 ```yaml
-name: Helm lint, test, package and publish
+name: Helm lint, test, package, publish, audit, diff
 
 on: pull_request
 
@@ -91,8 +98,9 @@ jobs:
     # - name: myOtherJob1
     #   run:
 
+
       - name: "Helm publish"
-        uses: draios/action-helm-tools@v1.1.0
+        uses: rarchk/action-helm-tools@v1.1.0
         with:
           action: "package"
         env:
@@ -101,10 +109,10 @@ jobs:
           ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_HELM_USERNAME }}
           ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_HELM_PASSWORD }}
 
-      - name: "Helm publish"
-        uses: draios/action-helm-tools@v1.1.0
+      - name: "Helm publish artifactory"
+        uses: rarchk/action-helm-tools@v1.1.0
         with:
-          action: "publish"
+          action: "publish-artifactory"
         env:
           CHART_DIR: resources/helm/sdcadminoper
           ARTIFACTORY_URL: https://artifactory.internal.sysdig.com:443/artifactory/helm-local/
@@ -125,7 +133,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
       - name: "Helm Publish on GAR"
-        uses: draios/action-helm-tools@v1.2.0
+        uses: rarchk/action-helm-tools@v1.2.0
         with:
           action: "publish-gar"
         env:
@@ -139,4 +147,113 @@ jobs:
           GAR_URL: "us-docker.pkg.dev"
           GAR_JSON_KEY: "${{ secrets.GAR_DEV_RW_JSON_KEY }}"
           CHART_PREFIX: "YOUR_PREFIX"
+```
+## Addon for chart-museum
+```yaml
+name: Helm lint, test, package and publish
+on: pull_request
+
+jobs:
+  helm-suite:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      - name: "Helm publish artifactory"
+        uses: rarchk/action-helm-tools@v1.2.0
+        with:
+          action: "publish-chartmuseum"
+        env:
+          CHART_DIR: resources/helm/sdcadminoper
+          ARTIFACTORY_URL: https://artifactory.internal.sysdig.com:443/artifactory/helm-local/
+          ARTIFACTORY_USERNAME: ${{ secrets.ARTIFACTORY_HELM_USERNAME }}
+          ARTIFACTORY_PASSWORD: ${{ secrets.ARTIFACTORY_HELM_PASSWORD }}
+```
+
+## Diff as a template
+Diff can be used to compute differences between complex helm distributions
+
+```mermaid
+graph TD
+subgraph ComplexHelmDistributions
+HelmFile --> ListOfHelmCharts
+CustomRelease --> ListOfHelmCharts
+end
+
+subgraph CD_Workflows
+ArgoCDApplication --> HelmChart
+end
+subgraph HELM_Repos
+B[HelmChart]
+end
+
+CD_Workflows --> D
+ComplexHelmDistributions -.-> D
+ComplexHelmDistributions -.-> D
+ComplexHelmDistributions -.-> D
+HELM_Repos --> D
+D[[Diff Action Template]]
+D --> C(fa:fa-genderless)
+```
+### Algorithm
+1. We would need previous and next version
+2. We would need access to remote chart repository
+3. We can use this command to generate templates locally and remotely
+4. We take following inputs
+   1. previous version
+   2. current version[optional] or can be generated locally
+
+```bash
+# local templating
+helm template <chart_name>.tgz -f values.yaml
+
+# remote templating
+helm template <remote_repo>/chart_name --version 1.17.1 -f values.yaml
+
+# search for all versions
+helm search repo <remote_repo>/chart_name --versions
+```
+4. Diff it
+
+
+### Workflow Example
+```yaml
+      - run: sh -c "sudo wget https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64 -O /usr/bin/yq && sudo chmod +x /usr/bin/yq"
+        name: setup yq
+
+      - name: Get upstream chart version
+        id: lookupChartVersion
+        run: |
+          sh -c "echo result=$(git fetch -a; git show origin/${{ steps.branch-name.outputs.base_ref_branch }}:${{ matrix.dir }}/Chart.yaml  | yq .version) >> $GITHUB_OUTPUT"
+
+      - name: Get upstream chart name
+        id: lookupChartName
+        run: |
+          sh -c "echo result=$(yq .name <  ${{ matrix.dir }}/Chart.yaml) >> $GITHUB_OUTPUT"
+
+
+      - name: "Helm diff"
+        id: diff
+        uses: rarchk/action-helm-tools@v1.2.0
+        env:
+          ACTION: "diff"
+          FROM_CHART: "${{ steps.lookupChartVersion.outputs.result }}"
+          TO_CHART: ""
+          CHART_DIR: "${{ matrix.dir }}" #In case TO_CHART is not available
+          CHART_NAME: "${{ steps.lookupChartName.outputs.result }}"
+          OPTIONAL_VALUES: "app.ingress.enabled=false"
+          ARTIFACTORY_URL: ""
+          ARTIFACTORY_USERNAME:  ""
+          ARTIFACTORY_PASSWORD:  ""
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+```
+
+## Audit example
+It statically audits k8s resources
+```yaml
+      - name: "Helm audit"
+        uses: rarchk/action-helm-tools@v1.2.0
+        env:
+          ACTION: "audit"
+          CHART_DIR: "${{ matrix.dir }}"
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 ```
