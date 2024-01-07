@@ -14,7 +14,6 @@ install_ark
 install_helm
 install_artifactory_plugin
 install_cmpush_plugin
-get_chart_version
 case "${ACTION}" in
     "lint")
         print_title "Helm dependency build"
@@ -35,7 +34,7 @@ case "${ACTION}" in
 
         print_title "Helm audit"
         polaris audit --helm-chart  "${CHART_DIR}" --helm-values "${CHART_DIR}/values.yaml" --format=pretty --quiet
- 
+
         send_github_comments "Computed Audit for ${CHART_DIR}"  "$(helm template ${CHART_DIR} -f ${CHART_DIR}/values.yaml  | kube-score score -)"
 
         ;;
@@ -69,7 +68,7 @@ case "${ACTION}" in
                     helm template "${CHART_DIR}" -f "${CHART_DIR}/values.yaml"  > /tmp/current_values.yaml
                 else
                     helm template "${CHART_DIR}" -f "${CHART_DIR}/values.yaml" --set "${OPTIONAL_VALUES}" > /tmp/current_values.yaml
-                fi               
+                fi
             else
                 touch /tmp/current_values.yaml
                 printf "\x1B[31m FROM_CHART: Will create empty template\n"
@@ -89,6 +88,7 @@ case "${ACTION}" in
         ;;
     "package")
         print_title "Helm dependency build"
+        get_chart_version
         helm dependency build "${CHART_DIR}"
 
         print_title "Linting"
