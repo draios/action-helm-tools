@@ -4,5 +4,5 @@ runs:
   using: "composite"
   steps:
     - uses: actions/setup-python@v2
-    - run: ${{ github.action_path }}/main.sh
+    - run: ${GITHUB_ACTION_PATH}/main.sh
       shell: bash
